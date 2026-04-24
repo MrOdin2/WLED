@@ -103,6 +103,7 @@ void handleSerial()
         else if (next == 'L')  { sendBytes(); } // Send LED data as TPM2 Data Packet
         else if (next == 'o')  { continuousSendLED = false; } // Disable Continuous Serial Streaming
         else if (next == 'O')  { continuousSendLED = true; } // Enable Continuous Serial Streaming
+        else if (next == 'S')  {  sendJSON(); } // send json containing segment information
         else if (next == '{')  { //JSON API
           bool verboseResponse = false;
           if (!requestJSONBufferLock(JSON_LOCK_SERIAL)) {
