@@ -1,3 +1,6 @@
+Just a quick and dirty fix for a problem im having: getting segment info over serial. 
+
+
 <p align="center">
   <img src="/images/wled_logo_akemi.png">
   <a href="https://github.com/wled-dev/WLED/releases"><img src="https://img.shields.io/github/release/wled-dev/WLED.svg?style=flat-square"></a>
@@ -32,6 +35,10 @@ Originally created by [Aircoookie](https://github.com/Aircoookie)
 - Configurable analog clock (Cronixie, 7-segment and EleksTube IPS clock support via usermods) 
 - Configurable Auto Brightness limit for safe operation  
 - Filesystem-based config for easier backup of presets and settings  
+
+- This version simple JSON commands to request info over Serial 
+  - s: Returns the current WLED serial JSON response with top-level state and info objects, matching the HTTP JSON API structure.
+  - S: Returns a compact segment list as { "seg": [...] }, where each segment includes its id, first LED index, and last LED index.
 
 ## 💡 Supported light control interfaces
 - WLED app for [Android](https://play.google.com/store/apps/details?id=ca.cgagnier.wlednativeandroid) and [iOS](https://apps.apple.com/gb/app/wled-native/id6446207239)
