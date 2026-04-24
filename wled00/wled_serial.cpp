@@ -70,6 +70,29 @@ static void sendBytes(){
   }
 }
 
+static inline void serializeStateInfoResponse(JsonDocument& doc) {
+  JsonObject state = doc.createNestedObject("state");
+  serializeState(state);
+  JsonObject info = doc.createNestedObject("info");
+  serializeInfo(info);
+}
+
+static inline void sendStateInfoResponse() {
+  if (!serialCanTX) return;
+
+  if (!requestJSONBufferLock(JSON_LOCK_SERIAL)) {
+    Serial.printf_P(PSTR("{\"error\":%d}\n"), ERR_NOBUF);
+    return;
+  }
+
+  pDoc->clear();
+  serializeStateInfoResponse(*pDoc);
+  serializeJson(*pDoc, Serial);
+  Serial.println();
+
+  releaseJSONBufferLock();
+}
+
 void handleSerial()
 {
   if (!(serialCanRX && Serial)) return; // arduino docs: `if (Serial)` indicates whether or not the USB CDC serial connection is open. For all non-USB CDC ports, this will always return true
@@ -103,6 +126,7 @@ void handleSerial()
         else if (next == 'L')  { sendBytes(); } // Send LED data as TPM2 Data Packet
         else if (next == 'o')  { continuousSendLED = false; } // Disable Continuous Serial Streaming
         else if (next == 'O')  { continuousSendLED = true; } // Enable Continuous Serial Streaming
+        else if (next == 's')  { sendStateInfoResponse(); } // Send state and info as JSON object
         else if (next == '{')  { //JSON API
           bool verboseResponse = false;
           if (!requestJSONBufferLock(JSON_LOCK_SERIAL)) {
@@ -116,11 +140,7 @@ void handleSerial()
             //only send response if TX pin is unused for other purposes
             if (verboseResponse && serialCanTX) {
               pDoc->clear();
-              JsonObject stateDoc = pDoc->createNestedObject("state");
-              serializeState(stateDoc);
-              JsonObject info  = pDoc->createNestedObject("info");
-              serializeInfo(info);
-
+              serializeStateInfoResponse(*pDoc);
               serializeJson(*pDoc, Serial);
               Serial.println();
             }
