@@ -70,6 +70,59 @@ static void sendBytes(){
   }
 }
 
+static inline void serializeStateInfoResponse(JsonDocument& doc) {
+  JsonObject state = doc.createNestedObject("state");
+  serializeState(state);
+  JsonObject info = doc.createNestedObject("info");
+  serializeInfo(info);
+}
+
+static inline void serializeSegmentListResponse(JsonDocument& doc) {
+  JsonArray segments = doc.createNestedArray("seg");
+
+  for (size_t s = 0; s < strip.getSegmentsNum(); s++) {
+    const Segment& seg = strip.getSegment(s);
+    if (!seg.isActive()) continue;
+
+    JsonObject segment = segments.createNestedObject();
+    segment["id"] = s;
+    segment["first"] = seg.start;
+    segment["last"] = (seg.stop > seg.start) ? seg.stop - 1 : seg.start;
+  }
+}
+
+static inline void sendStateInfoResponse() {
+  if (!serialCanTX) return;
+
+  if (!requestJSONBufferLock(JSON_LOCK_SERIAL)) {
+    Serial.printf_P(PSTR("{\"error\":%d}\n"), ERR_NOBUF);
+    return;
+  }
+
+  pDoc->clear();
+  serializeStateInfoResponse(*pDoc);
+  serializeJson(*pDoc, Serial);
+  Serial.println();
+
+  releaseJSONBufferLock();
+}
+
+static inline void sendSegmentListResponse() {
+  if (!serialCanTX) return;
+
+  if (!requestJSONBufferLock(JSON_LOCK_SERIAL)) {
+    Serial.printf_P(PSTR("{\"error\":%d}\n"), ERR_NOBUF);
+    return;
+  }
+
+  pDoc->clear();
+  serializeSegmentListResponse(*pDoc);
+  serializeJson(*pDoc, Serial);
+  Serial.println();
+
+  releaseJSONBufferLock();
+}
+
 void handleSerial()
 {
   if (!(serialCanRX && Serial)) return; // arduino docs: `if (Serial)` indicates whether or not the USB CDC serial connection is open. For all non-USB CDC ports, this will always return true
@@ -103,6 +156,8 @@ void handleSerial()
         else if (next == 'L')  { sendBytes(); } // Send LED data as TPM2 Data Packet
         else if (next == 'o')  { continuousSendLED = false; } // Disable Continuous Serial Streaming
         else if (next == 'O')  { continuousSendLED = true; } // Enable Continuous Serial Streaming
+        else if (next == 's')  { sendStateInfoResponse(); } // Send state and info as JSON object
+        else if (next == 'S')  { sendSegmentListResponse(); } // Send active segment geometry as JSON array
         else if (next == '{')  { //JSON API
           bool verboseResponse = false;
           if (!requestJSONBufferLock(JSON_LOCK_SERIAL)) {
@@ -116,11 +171,7 @@ void handleSerial()
             //only send response if TX pin is unused for other purposes
             if (verboseResponse && serialCanTX) {
               pDoc->clear();
-              JsonObject stateDoc = pDoc->createNestedObject("state");
-              serializeState(stateDoc);
-              JsonObject info  = pDoc->createNestedObject("info");
-              serializeInfo(info);
-
+              serializeStateInfoResponse(*pDoc);
               serializeJson(*pDoc, Serial);
               Serial.println();
             }
