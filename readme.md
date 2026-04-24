@@ -36,7 +36,7 @@ Originally created by [Aircoookie](https://github.com/Aircoookie)
 - Configurable Auto Brightness limit for safe operation  
 - Filesystem-based config for easier backup of presets and settings  
 
-- This version simple JSON commands to request info over Serial 
+- This version adds two simple JSON commands to request LED information over Serial 
   - s: Returns the current WLED serial JSON response with top-level state and info objects, matching the HTTP JSON API structure.
   - S: Returns a compact segment list as { "seg": [...] }, where each segment includes its id, first LED index, and last LED index.
 
